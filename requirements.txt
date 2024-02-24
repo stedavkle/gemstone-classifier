@@ -1,0 +1,11 @@
+ipykernel
+BeautifulSoup4
+pandas
+tqdm
+grequests
+pillow
+requests
+opencv-python
+numpy
+scikit-image
+tensorflow
