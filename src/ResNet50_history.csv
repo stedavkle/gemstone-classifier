@@ -1,0 +1,2 @@
+loss,accuracy,top_3_accuracy,top_5_accuracy,val_loss,val_accuracy,val_top_3_accuracy,val_top_5_accuracy
+2.0086476802825928,0.5676209330558777,0.7591313123703003,0.8183612823486328,47643.0,0.1678183674812317,1.0,1.0
