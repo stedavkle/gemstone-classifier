@@ -16,11 +16,9 @@ print("Num CPUs Available: ", len(tf.config.list_physical_devices('CPU')))
 
 # Parameters
 #data_dir = "../dat/images_augmented_cropped" dat\gempundit_all_cropped_augmented_2000
-dataset = "gempundit_2022_cropped_augmented_2000"
-data_dir = "../dat/" + dataset
-model_dir = "../mod/" + dataset
-if not os.path.exists(model_dir):
-    os.makedirs(model_dir)
+datasets = ["images_cropped_augmented_2000", "images_cropped_augmented_1000", "gempundit_2022_cropped_augmented_2000", "gempundit_2022_cropped_augmented_1000"]
+
+
 
 target_size = (224, 224)
 batch_size = 32
@@ -29,25 +27,7 @@ l2_lambda = 0.001
 
 validation_split = 0.2  # Percentage of data to use for validation
 
-# Data Generator with Splitting
-datagen = ImageDataGenerator(rescale=1./255, validation_split=validation_split)
 
-# Load data with the split
-train_data = datagen.flow_from_directory(
-    data_dir,
-    target_size=target_size,
-    batch_size=batch_size,
-    class_mode='categorical',
-    subset='training' 
-)
-
-val_data = datagen.flow_from_directory(
-    data_dir,
-    target_size=target_size,
-    batch_size=batch_size,
-    class_mode='categorical',
-    subset='validation' 
-)
 
 # Model Creation with Pre-trained Weights
 def create_model(model_type):
@@ -113,31 +93,62 @@ def create_model(model_type):
     ])
 
     model.compile(optimizer='adam', loss='categorical_crossentropy', 
-                  metrics=['accuracy', tf.keras.metrics.TopKCategoricalAccuracy(k=3, name="top_3_accuracy", dtype=None), tf.keras.metrics.TopKCategoricalAccuracy(k=5, name="top_5_accuracy", dtype=None)])
+                  metrics=['accuracy',
+                           tf.keras.metrics.TopKCategoricalAccuracy(k=3, name="top_3_accuracy", dtype=None),
+                           tf.keras.metrics.TopKCategoricalAccuracy(k=5, name="top_5_accuracy", dtype=None),
+                           ])
     return model
 
-# Training and Evaluation
-models = {
-    # "VGG16": create_model("VGG16"),
-    # "MobileNet": create_model("MobileNet"),
-    # "ResNet50": create_model("ResNet50"),
-    # "OwnModel": create_model("OwnModel"),
-    "OwnModelRegularized": create_model("OwnModelRegularized")
-}
+
 #%%
 results = {}
-for model_name, model in models.items():
+for dataset in datasets:
+    data_dir = "../dat/" + dataset
+    model_dir = "../mod/" + dataset
 
-    history = model.fit(train_data, epochs=num_epochs, validation_data=val_data, verbose=1)
-    results[model_name] = history.history
+    if not os.path.exists(model_dir):
+            os.makedirs(model_dir)
 
-    # Save model parameters
-    model.save(os.path.join(model_dir, f"{model_name}.h5"))
-    # Convert history to DataFrame
-    df = pd.DataFrame(history.history)
-    
-    # Save DataFrame to CSV55
-    df.to_csv(os.path.join(model_dir, f"{model_name}.csv"))
+    # Data Generator with Splitting
+    datagen = ImageDataGenerator(rescale=1./255, validation_split=validation_split)
+
+    # Load data with the split
+    train_data = datagen.flow_from_directory(
+        data_dir,
+        target_size=target_size,
+        batch_size=batch_size,
+        class_mode='categorical',
+        subset='training' 
+    )
+
+    val_data = datagen.flow_from_directory(
+        data_dir,
+        target_size=target_size,
+        batch_size=batch_size,
+        class_mode='categorical',
+        subset='validation' 
+    )
+
+    # Training and Evaluation
+    models = {
+         "VGG16": create_model("VGG16"),
+         "MobileNet": create_model("MobileNet"),
+         "ResNet50": create_model("ResNet50"),
+         "OwnModel": create_model("OwnModel"),
+        #"OwnModelRegularized": create_model("OwnModelRegularized")
+    }
+
+    for model_name, model in models.items():
+        history = model.fit(train_data, epochs=num_epochs, validation_data=val_data, verbose=1)
+        results[model_name] = history.history
+
+        # Save model parameters
+        model.save(os.path.join(model_dir, f"{model_name}.h5"))
+        # Convert history to DataFrame
+        df = pd.DataFrame(history.history)
+
+        # Save DataFrame to CSV55
+        df.to_csv(os.path.join(model_dir, f"{model_name}.csv"))
 
 print("Training and Evaluation Complete!")
 
